@@ -9,7 +9,7 @@ This project investigates how the COVID-19 pandemic affected countries different
 COVID-19 reshaped global health policy, overwhelmed hospitals, and challenged public infrastructure. In this project, we use publicly available data from trusted sources to answer the following questions:
 
 1. **How did daily case counts change across major countries over time?**
-2. **What is the relationship between vaccination rates and death rates?**
+2. **What is the relationship between vaccination rates and death rates in the US?**
 3. **How did ICU capacity respond to COVID-19 waves across countries?**
 
 Through careful data cleaning, transformation, and visualization in R, we aim to uncover patterns that could inform future pandemic responses.
