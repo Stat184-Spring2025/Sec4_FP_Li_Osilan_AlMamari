@@ -34,10 +34,15 @@ Countries with high vaccination rates generally experienced lower COVID-19 death
 
 ### 🗂️ Folders
 
-- **`/data`** – All raw and processed datasets used for analysis:
+- **`/raw_data`** – All raw data used for analysis:
   - `owid_covid_data.csv` – COVID-19 data from Our World in Data.
   - `covid_datahub_global.csv` – Global data from the COVID-19 Data Hub.
   - `jh_confirmed_cases.csv` – Time series data of confirmed cases from Johns Hopkins.
+
+  - **`/tidied_data`** – All cleaned data used for analysis:
+  - `owid_covid_data_filtered_final.csv` – COVID-19 data from Our World in Data.
+  - `covid_datahub_USA_filtered.csv` – Global data from the COVID-19 Data Hub.
+  - `jh_confirmed_cases_country_level.csv` – Time series data of confirmed cases from Johns Hopkins.
 
 - **`/code`** – Scripts for reproducible analysis:
   - `01_fetch_data.R` – Downloads and stores datasets.

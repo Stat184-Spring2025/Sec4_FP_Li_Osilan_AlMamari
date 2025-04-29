@@ -62,6 +62,8 @@
 **Objectives:**
 - Answer core research questions through carefully designed plots and summaries.
 
+**We can use a pai chart to show the difference between vaccinated and fully-vaccinated and see how that plays a role in the death rate**
+
 **Research Questions & Associated Plots:**
 
 3.1. **How did daily COVID-19 case counts evolve across countries over time?**
@@ -69,7 +71,7 @@
 - Facet wrap by country to show comparative timelines.
 - Highlight key surge periods (e.g., Delta and Omicron waves).
 
-3.2. **What is the relationship between vaccination rates and death rates?**
+3.2. **What is the relationship between vaccination rates and death rates in the US?**
 - Scatter plot:
   - X-axis: % fully vaccinated population.
   - Y-axis: death rate per 100,000 people.
