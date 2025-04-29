@@ -39,4 +39,4 @@ write_csv(covid_us, "covid_datahub_USA.csv")
 owid_data <- read_csv("https://covid.ourworldindata.org/data/owid-covid-data.csv")
 
 # Save a local copy of the OWID dataset
-write_csv(owid_data, "owid_covid_data.csv")
+write_csv(owid_data, "raw_data/owid_covid_data.csv")
