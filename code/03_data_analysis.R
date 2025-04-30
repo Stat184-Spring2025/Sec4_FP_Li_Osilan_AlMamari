@@ -44,7 +44,7 @@ icu_summary <- icu_data %>%
   summarise(
     Total_ICU_Patients = sum(icu_patients, na.rm = TRUE),
     Max_ICU_Patients = max(icu_patients, na.rm = TRUE),
-    Mean_ICU_Patients = mean(icu_patients, na.rm = TRUE),
+    Mean_ICU_Patients = mean(icu_patients, na.rm = TRUE)
   ) %>%
   arrange(desc(Max_ICU_Patients))
 
@@ -55,7 +55,7 @@ icu_summary <- icu_data %>%
 case_summary %>%
   kable(caption = "Summary of Monthly COVID-19 Cases by Country",
         digits = 2, 
-        align = c("l", rep("c", 4))
+        align = c("l", rep("c", 3))
   )%>%
   kable_styling(
     bootstrap_options = c("striped", "hover", "condensed"),
