@@ -22,7 +22,7 @@ Countries with high vaccination rates generally experienced lower COVID-19 death
 
 ![Death Rate vs Vaccination Plot](figures/death_vs_vax.png)
 
-*Figure: A scatterplot showing the relationship between full vaccination rates and COVID-19 death rates per 100,000 population. Most countries trend downward, but a few outliers suggest confounding variables.*
+*Figure: A scatterplot showing the relationship between full vaccination rates and COVID-19 death rates per 100,000 population. As the vaccination rates increase, there is no significant decrease in the death rate.*
 
 ---
 
