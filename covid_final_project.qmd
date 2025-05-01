@@ -1,0 +1,118 @@
+---
+title: "Global COVID-19 Trends: Cases, Vaccinations, and ICU Strain"
+author: "Li Zhu, Osilan, AlMamari"
+format:
+  html:
+    toc: true
+    code-fold: true
+    theme: cosmo
+editor: visual
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library(readr)
+library(dplyr)
+library(knitr)
+library(kableExtra)
+```
+
+# Introduction
+
+This project analyzes the impact of COVID-19 across major countries between 2020 and 2023. The following research questions guide our study:
+
+1.  How did daily case counts change across countries over time?
+2.  What is the relationship between vaccination and death rates in the US?
+3.  How did ICU capacity respond to COVID-19 waves globally?
+
+We use trusted global datasets, clean and transform them, and present insights using statistical summaries and visualizations.
+
+------------------------------------------------------------------------
+
+# Data Overview
+
+We utilize publicly available datasets from: - **Johns Hopkins University (JHU)**: Confirmed global case time series. - **COVID-19 Data Hub**: U.S.-focused metrics on deaths and vaccinations. - **Our World in Data (OWID)**: Global ICU and mortality metrics.
+
+All data were preprocessed using R scripts and stored in `tidied_data/`.
+
+------------------------------------------------------------------------
+
+# 1. COVID-19 Case Trends by Country
+
+```{r load-cases}
+jh_cases <- read_csv("tidied_data/jh_confirmed_cases_country_level.csv")
+
+case_summary <- jh_cases %>%
+  group_by(`Country/Region`) %>%
+  summarise(
+    Total_Cases = sum(total_case),
+    Mean_Monthly_Cases = mean(total_case),
+    Peak_Month = year_month[which.max(total_case)],
+    Peak_Cases = max(total_case)
+  ) %>%
+  arrange(desc(Total_Cases))
+
+kable(case_summary, caption = "Summary of Monthly COVID-19 Cases by Country") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
+```
+
+------------------------------------------------------------------------
+
+# 2. US Vaccination and Death Relationship
+
+```{r load-us}
+us_data <- read_csv("tidied_data/covid_datahub_USA_filtered.csv")
+
+summary_stats_us <- us_data %>%
+  summarise(
+    Total_Deaths = sum(deaths),
+    Max_People_Vaccinated = max(people_vaccinated),
+    Max_Fully_Vaccinated = max(people_fully_vaccinated),
+    Mean_Daily_Deaths = mean(deaths),
+    Median_Daily_Deaths = median(deaths)
+  )
+
+correlation <- cor(us_data$people_fully_vaccinated, us_data$deaths, use = "complete.obs")
+summary_stats_us$Correlation_FullyVaccinated_Deaths <- round(correlation, 3)
+
+kable(summary_stats_us, caption = "US COVID-19 Vaccination and Death Summary") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
+```
+
+------------------------------------------------------------------------
+
+# 3. ICU Response by Country
+
+```{r load-icu}
+icu_data <- read_csv("tidied_data/owid_covid_data_filtered_final.csv")
+
+icu_summary <- icu_data %>%
+  group_by(country) %>%
+  summarise(
+    Total_ICU_Patients = sum(icu_patients, na.rm = TRUE),
+    Max_ICU_Patients = max(icu_patients, na.rm = TRUE),
+    Mean_ICU_Patients = mean(icu_patients, na.rm = TRUE)
+  ) %>%
+  arrange(desc(Max_ICU_Patients))
+
+kable(icu_summary, caption = "ICU Response to COVID-19 Waves by Country") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
+```
+
+------------------------------------------------------------------------
+
+# Visualization
+
+*TODO: Add visualizations such as line charts, scatterplots, or heatmaps to support the analysis above.*
+
+------------------------------------------------------------------------
+
+# Conclusion
+
+-   The US and UK experienced the highest surges in monthly cases.
+-   Vaccination rates show a weak negative correlation with death rates in the US, suggesting other factors also influenced mortality.
+-   ICU responses varied widely, with some countries reaching higher peak loads.
+
+Future work could normalize by population size, examine lag effects, and overlay policy changes.
+
+------------------------------------------------------------------------
