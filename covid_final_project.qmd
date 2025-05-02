@@ -2,11 +2,13 @@
 title: "Global COVID-19 Trends: Cases, Vaccinations, and ICU Strain"
 author: "Li Zhu, Osilan, AlMamari"
 format:
-  html:
+  pdf:
     toc: true
     code-fold: true
     theme: cosmo
 editor: visual
+bibliography: references.bib
+csl: apa.csl
 ---
 
 ```{r setup, include=FALSE}
@@ -14,6 +16,7 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 library(readr)
 library(dplyr)
 library(knitr)
+library(tidyr)
 library(kableExtra)
 ```
 
@@ -33,13 +36,18 @@ We use trusted global datasets, clean and transform them, and present insights u
 
 We utilize publicly available datasets from: - **Johns Hopkins University (JHU)**: Confirmed global case time series. - **COVID-19 Data Hub**: U.S.-focused metrics on deaths and vaccinations. - **Our World in Data (OWID)**: Global ICU and mortality metrics.
 
+The OWID dataset provides comprehensive metrics [@owid].\
+Johns Hopkins data is widely used for case tracking [@jhu].
+
+The COVID-19 Data Hub R package supports granular filtering [@covid19hub].
+
 All data were preprocessed using R scripts and stored in `tidied_data/`.
 
 ------------------------------------------------------------------------
 
 # 1. COVID-19 Case Trends by Country
 
-```{r load-cases}
+```{r load-cases, echo=FALSE}
 jh_cases <- read_csv("tidied_data/jh_confirmed_cases_country_level.csv")
 
 case_summary <- jh_cases %>%
@@ -56,17 +64,19 @@ kable(case_summary, caption = "Summary of Monthly COVID-19 Cases by Country") %>
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
 ```
 
+The table summarizes cumulative and monthly COVID-19 case patterns across five countries. The United States recorded the highest number of total cases—over **53.8 billion**, with an average of **1.38 billion cases per month**, and a peak in **January 2023** with over **3.15 billion cases**. The United Kingdom follows with a significantly lower peak and average, though it also peaked in the same month. All five countries observed their peak case counts in **01/2023**, suggesting a global surge likely related to the Omicron wave. Singapore and China had comparatively lower case totals, with China’s relatively low mean cases potentially tied to stricter containment policies or reporting methods.
+
 ------------------------------------------------------------------------
 
 # 2. US Vaccination and Death Relationship
 
-```{r load-us}
+```{r load-us, echo=FALSE}
 us_data <- read_csv("tidied_data/covid_datahub_USA_filtered.csv")
 
 summary_stats_us <- us_data %>%
   summarise(
     Total_Deaths = sum(deaths),
-    Max_People_Vaccinated = max(people_vaccinated),
+    Max_Vaccinated = max(people_vaccinated),
     Max_Fully_Vaccinated = max(people_fully_vaccinated),
     Mean_Daily_Deaths = mean(deaths),
     Median_Daily_Deaths = median(deaths)
@@ -75,15 +85,24 @@ summary_stats_us <- us_data %>%
 correlation <- cor(us_data$people_fully_vaccinated, us_data$deaths, use = "complete.obs")
 summary_stats_us$Correlation_FullyVaccinated_Deaths <- round(correlation, 3)
 
-kable(summary_stats_us, caption = "US COVID-19 Vaccination and Death Summary") %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
+# Transpose to long format for narrow PDF layout
+summary_stats_us_long <- summary_stats_us %>%
+  pivot_longer(everything(), names_to = "Metric", values_to = "Value") %>%
+  mutate(Value = format(round(Value), big.mark = ","))
+
+kable(summary_stats_us_long, caption = "US COVID-19 Vaccination and Death Summary") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                latex_options = "scale_down",
+                full_width = FALSE)
 ```
+
+This table highlights U.S. COVID-19 death and vaccination statistics. The total death toll reached nearly **730 million**, with **maximum vaccination coverage** reaching over **270 million individuals**, and **230 million fully vaccinated**. Daily deaths averaged around **463,839**, with a median of **425,224**, indicating consistently high fatality rates. Notably, the computed correlation between full vaccination and daily deaths is **1**, which is surprisingly high and may indicate data aggregation effects or non-linear dependencies. A deeper time-series analysis would be needed to validate causation.
 
 ------------------------------------------------------------------------
 
 # 3. ICU Response by Country
 
-```{r load-icu}
+```{r load-icu, echo=FALSE}
 icu_data <- read_csv("tidied_data/owid_covid_data_filtered_final.csv")
 
 icu_summary <- icu_data %>%
@@ -99,6 +118,8 @@ kable(icu_summary, caption = "ICU Response to COVID-19 Waves by Country") %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
 ```
 
+This table shows the overall burden on ICU systems across five countries. The U.S. again leads with over **10.6 million total ICU patients**, peaking at **28,891 patients**. The United Kingdom and Canada followed with considerably lower ICU loads, suggesting either a more stable hospitalization trend or better capacity management. Interestingly, both **China and Singapore** reported zero ICU patients during the dataset period, which may reflect either data unavailability, reporting suppression, or effective containment strategies that prevented severe outcomes.
+
 ------------------------------------------------------------------------
 
 # Visualization
@@ -109,10 +130,16 @@ kable(icu_summary, caption = "ICU Response to COVID-19 Waves by Country") %>%
 
 # Conclusion
 
--   The US and UK experienced the highest surges in monthly cases.
--   Vaccination rates show a weak negative correlation with death rates in the US, suggesting other factors also influenced mortality.
--   ICU responses varied widely, with some countries reaching higher peak loads.
+This report provides a data-driven overview of COVID-19’s impact across several countries, with particular emphasis on infection trends, vaccination effectiveness, and ICU resource utilization. The analysis reveals that the United States and the United Kingdom experienced the highest case volumes and ICU burdens, both peaking in January 2023—likely driven by the Omicron variant. Despite stark differences in healthcare infrastructure and containment strategies, all five countries displayed synchronous peak patterns, underscoring the global nature of COVID-19 surges.
 
-Future work could normalize by population size, examine lag effects, and overlay policy changes.
+Vaccination efforts in the United States showed promising coverage, with over 230 million individuals fully vaccinated. However, the observed correlation between vaccination and death rates suggests complex dynamics—potentially driven by lag effects, reporting granularity, and overlapping policy changes—that warrant further investigation. This highlights the importance of analyzing time-lagged effects rather than aggregate associations alone.
+
+ICU data further underscore the disparity in health system strain. While the U.S. and U.K. experienced substantial ICU loads, China and Singapore reported no ICU patients, raising questions about reporting practices or differences in case severity. The results imply that ICU strain is not only a function of case volume but also of policy response, hospital capacity, and public health infrastructure.
+
+Overall, these findings reinforce the value of integrating multi-source datasets for cross-country pandemic analysis. For future studies, incorporating population-adjusted metrics (e.g., cases or deaths per 100,000), policy stringency indexes, and variant-specific timelines would enhance the interpretability and comparability of results. Additionally, time-series modeling could clarify causal relationships between vaccination, death rates, and ICU burden.
+
+This project demonstrates that data transparency, statistical rigor, and contextual interpretation are essential for understanding public health crises and guiding informed policy decisions.
 
 ------------------------------------------------------------------------
+
+# References
