@@ -98,13 +98,6 @@ ggplot(
 # Load Data ----
 covid_ICU_patients <- read_csv("owid_covid_data_filtered_final.csv")
 
-# Define populations----
-populations <- c(
-  "United States" = 335000000,
-  "United Kingdom" = 68000000,
-  "Canada" = 40000000
-)
-
 # Data Wrangling ----
 # Filter the three countries to focus on
 # Change the date format to month and year
