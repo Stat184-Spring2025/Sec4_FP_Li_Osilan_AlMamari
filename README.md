@@ -20,7 +20,7 @@ Through careful data cleaning, transformation, and visualization in R, we aim to
 
 Countries with high vaccination rates generally experienced lower COVID-19 death rates, but this trend wasn’t uniform. Some well-vaccinated countries still faced high mortality, hinting at the role of health infrastructure and response time.
 
-![Death Rate vs Vaccination Plot](figures/death_vs_vax.png)
+![Death Rate vs Vaccination Plot](figures/death_vs_vac.png)
 
 *Figure: A scatterplot showing the relationship between full vaccination rates and COVID-19 death rates per 100,000 population. As the vaccination rates increase, there is no significant decrease in the death rate.*
 
