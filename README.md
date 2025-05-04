@@ -28,9 +28,12 @@ Countries with high vaccination rates generally experienced lower COVID-19 death
 
 ## Repo Structure
 
-- **`final_report.qmd`** – The Quarto source file containing the full written analysis.
-- **`final_report.pdf`** – The rendered final report, submitted for grading.
+- **`covid_final_report.qmd`** – The Quarto source file containing the full written analysis.
+- **`covid_final_report.pdf`** – The rendered final report, submitted for grading.
 - **`README.md`** – This file, summarizing the project and repo layout.
+- **`project_plan.qmd`** – The quarto source file containing our start-up plan.
+- **`project_plan.pdf`** – The rendered file containing our start-up plan.
+- **`apa.csl & references.bib`** – For citation purposes.
 
 ### 🗂️ Folders
 
@@ -47,12 +50,13 @@ Countries with high vaccination rates generally experienced lower COVID-19 death
 - **`/code`** – Scripts for reproducible analysis:
   - `01_fetch_data.R` – Downloads and stores datasets.
   - `02_clean_transform.R` – Cleans and reshapes the data.
-  - `03_visualizations.R` – Generates plots for the final report.
+  - `03_data_analysis.R` – Cleans and reshapes the data.
+  - `04_data__visualizations.R` – Generates plots for the final report.
 
 - **`/figures`** – Visuals used in the report and README:
   - `cases_over_time.png`
-  - `icu_utilization.png`
-  - `death_vs_vax.png`
+  - `icu_occupancy.png`
+  - `death_vs_vac.png`
 
 ---
 
