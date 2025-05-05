@@ -5,47 +5,31 @@ library(dplyr)
 library(tidyverse)
 library(lubridate)
 
-# Load tidied data ----
-casesTidy <- read_csv("jh_confirmed_cases_country_level.csv")
-covidUSA <- read_csv("covid_datahub_USA_filtered.csv")
-covidTidy <- read_csv("owid_covid_data_filtered_final.csv")
-
-# Calculate new daily cases ----
-covidTidy <- covidTidy %>%
+# How did daily COVID-19 case counts evolve across countries over time? ----
+# Create a line plot to represent the cases for each of the 5 countries
+# Calculate new Yearly cases ----
+covidTidy <- read_csv("tidied_data/owid_covid_data_filtered_final.csv") %>%
   mutate(
     date = as.Date(date),
     new_cases = total_cases - lag(total_cases),
-    new_cases = ifelse(new_cases < 0, 0, new_cases),  # prevent negative values
-    new_cases = new_cases / 1000  # To scale down values
+    new_cases = ifelse(new_cases < 0, 0, new_cases) / 1000
   )
-# How did daily COVID-19 case counts evolve across countries over time? ----
-# Create a line plot to represent the cases for each of the 5 countries
 
-ggplot(
-  data = covidTidy,
-  mapping = aes(
-    x = date,
-    y = new_cases,
-    color = country,
-    linetype = country
-  )
-) +
+ggplot(covidTidy, aes(x = date, y = new_cases, color = country, linetype = country)) +
   geom_line(size = 0.5) +
-  scale_color_manual(
-    values = c("purple", "green","red", "blue","orange") 
-  ) +
+  scale_color_viridis_d(option = "plasma", begin = 0.1, end = 0.9) +
   labs(
-    title = "Daily COVID-19 Case Counts Over Time (2020–2024)",
-    x = "Date",
-    y = "Daily Cases",
+    x = "Year",
+    y = "Yearly Cases",
     color = "Country/Region",
     linetype = "Country/Region"
   ) +
   scale_y_continuous(labels = function(x) paste0(x, "k")) +
   theme_minimal() +
-  facet_wrap(~ country, scales = "free_y")
-
-
+  theme(
+    legend.position = "top"
+  ) +
+  facet_wrap(~ country, scales = "free_y", ncol = 2)
 # What is the relationship between vaccination rates and death rates in the US? ----
 # Create a scatter plot to represent the relationship between vaccination rates and death rates in the US.
 
@@ -53,118 +37,67 @@ ggplot(
 # Calculate the percentages of the fully vaccinated individuals.
 # Calculate the death rates per 100k people.
 
-covidUSA <- covidUSA %>%
+covidUSA <- read_csv("tidied_data/covid_datahub_USA_filtered.csv") %>%
   mutate(
-    date = as.Date(date), # Make sure date is formatted properly.
+    date = as.Date(date),
     pct_fully_vaccinated = (people_fully_vaccinated / 335000000) * 100,
-    daily_deaths = deaths - lag(deaths), # To get the daily deaths count.
-    death_rate_per_100k = (daily_deaths / 335000000) * 100000
+    daily_deaths = deaths - lag(deaths),
+    death_rate_per_100k = (daily_deaths / 335000000) * 100000,
+    year_date = as.factor(year(date))
   ) %>%
-  filter(pct_fully_vaccinated > 0,
-         daily_deaths > 0
-         )
+  filter(pct_fully_vaccinated > 0, daily_deaths > 0)
 
-# Create scatterplot ----
-# Using the tidy USA covid data
-
-ggplot(
-  data = covidUSA,
-  mapping = aes(
-    x = pct_fully_vaccinated, # x-axis: % fully vaccinated population.
-    y = death_rate_per_100k,  # y-axis: death rate per 100,000 people.
-    color = year(date))
-) +
+ggplot(covidUSA, aes(x = pct_fully_vaccinated, y = death_rate_per_100k, color = year_date)) +
   geom_point(alpha = 0.5, size = 2) +
-  geom_smooth(method = "loess", se = FALSE, color = "red") +
+  scale_color_viridis_d(option = "plasma", begin = 0.1, end = 0.9) +
+  geom_smooth(method = "loess", se = FALSE, color = "#0072B2") +
   labs(
-    title = "Relationship Between Vaccination Rate and Death Rate in the U.S.",
-    subtitle = "Each point represents a day in the U.S. from (2021–2023)",
-    x = "% Fully Vaccinated Population",
-    y = "Death Rate per 100,000 People",
+    x = "% Fully Vaccinated",
+    y = "Deaths per 100,000 People",
     color = "Year"
   ) +
   theme_bw() +
   theme(
-    plot.title = element_text(size = 16, face = "bold"),
-    plot.subtitle = element_text(size = 12),
-    axis.title = element_text(size = 12),
-    legend.position = "bottom"
+    legend.position = "top"
   )
+
 
 # How did ICU occupancy change during pandemic surges? ----
 # Create a grouped bar chart showing ICU patients for each of the three countries.
 # Highlight the delta and Omicron surges
 
-# Load Data ----
-covid_ICU_patients <- read_csv("owid_covid_data_filtered_final.csv")
-
 # Data Wrangling ----
 # Filter the three countries to focus on
 # Change the date format to month and year
 
-covid_ICU_patients <- covid_ICU_patients %>%
+covid_ICU <- read_csv("tidied_data/owid_covid_data_filtered_final.csv") %>%
   mutate(
     date = as.Date(date),
-    date = format(date, "%Y-%m")  
+    date_ym =  as.Date(format(date, "%Y-%m-01"))
   ) %>%
-  filter(country == "United States" |
-           country == "United Kingdom" |
-           country == "Canada") %>%
-  group_by(country, date) %>%
-  summarise(
-    icu_patients = sum(icu_patients, na.rm = TRUE),  # To calculate monthly ICU occupancy
-    .groups = "drop"
-  ) %>%
-  mutate(
-    icu_patients = icu_patients / 1000  # To make the values shorter
-  )
+  filter(country %in% c("United States", "United Kingdom", "Canada")) %>%
+  group_by(country, date_ym) %>%
+  summarise(icu_patients = sum(icu_patients, na.rm = TRUE), .groups = "drop") %>%
+  mutate(icu_patients = icu_patients / 1000)
 
-# Create the bar chart ----
-ggplot(
-  data = covid_ICU_patients,
-  mapping = aes(x = date,
-                y = icu_patients,
-                fill = country)
-) +
+ggplot(covid_ICU, aes(x = date_ym, y = icu_patients, fill = country)) +
   geom_bar(stat = "identity", position = "dodge") +
-  annotate(
-    "rect", 
-    xmin = "2021-06", xmax = "2021-11", # Highlight Delta surge (Jun2021-Nov2021)
-    ymin = -Inf, ymax = Inf, 
-    alpha = 0.2, 
-    fill = "yellow"
-    ) +
-  annotate("rect",
-           xmin = "2021-11", xmax = "2022-02", # Highlight Omicron surge (Nov2021-Feb2022)
-           ymin = -Inf, ymax = Inf,
-           alpha = 0.2,
-           fill = "orange"
-           ) +
-  annotate("text",
-           x = "2021-08",
-           y = 900,
-           label = "Delta",
-           size = 3.5
-           ) +
-  annotate("text",
-           x = "2022-01",
-           y = 900,
-           label = "Omicron",
-           size = 3.5
-           ) +
-  scale_fill_manual(
-    values = c("green","red", "blue") 
-  ) +
+  scale_fill_viridis_d(option = "plasma", begin = 0.1, end = 0.9) +
+  annotate("rect", xmin = as.Date("2021-06-01"), xmax = as.Date("2021-11-01"), ymin = -Inf, ymax = Inf, alpha = 0.2, fill = "#009E73") +
+  annotate("rect", xmin = as.Date("2021-11-01"), xmax = as.Date("2022-02-01"), ymin = -Inf, ymax = Inf, alpha = 0.2, fill = "#999999") +
+  annotate("text", x = as.Date("2021-08-01"), y = 900, label = "Delta", size = 3.5) +
+  annotate("text", x = as.Date("2022-01-01"), y = 900, label = "Omicron", size = 3.5) +
   labs(
-    title = "Monthly ICU Occupancy During COVID-19",
     x = "Month",
-    y = "ICU Patients (Monthly)",
+    y = "ICU Patients (in thousands)",
     fill = "Country"
   ) +
-  scale_y_continuous(labels = function(x) paste0(x, "k")) + # Adds a k to represent a thousand
+  scale_x_date(
+    breaks = seq(as.Date("2020-01-01"), as.Date("2024-08-01"), by = "3 months"),
+    date_labels = "%Y-%m"
+  ) +
   theme_bw() +
   theme(
-    axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
-    plot.title = element_text(size = 16, face = "bold"),
-    axis.title = element_text(size = 12)
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "top"
   )

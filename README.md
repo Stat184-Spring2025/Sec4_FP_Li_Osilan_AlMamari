@@ -66,14 +66,25 @@ Countries with high vaccination rates generally experienced lower COVID-19 death
 - **COVID-19 Data Hub R Package**: [https://covid19datahub.io/](https://covid19datahub.io/)
 - **Johns Hopkins CSSE Time Series**: [https://github.com/CSSEGISandData/COVID-19](https://github.com/CSSEGISandData/COVID-19)
 
-We also acknowledge the developers of `tidyverse`, `ggplot2`, `COVID19`, and `readr` R packages for making this analysis possible.
+We also acknowledge the developers of the following R packages:
+
+- `readr`
+- `dplyr`
+- `knitr`
+- `tidyr`
+- `kableExtra`
+- `lubridate`
+- `tidyverse`
+- `ggplot2`
+- `viridis`
+
 
 ---
 
 ## Authors
 
 - **Li Zhu** 
-- **Osilan**  
-- **AlMamari**
+- **Abdulrahman Osilan**  
+- **Mohammed Badar Al Mamari**
 
 For questions or collaboration, feel free to reach out via GitHub or email.

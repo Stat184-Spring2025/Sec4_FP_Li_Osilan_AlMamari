@@ -1,8 +1,19 @@
 ---
 title: "Global COVID-19 Trends: Cases, Vaccinations, and ICU Strain"
-author: "Li Zhu, Osilan, AlMamari"
+author: "Li Zhu, Abdulrahman Osilan, Mohammed Badar Al Mamari"
+execute:
+  echo: false
 format:
   pdf:
+    fig-width: 8
+    fig-height: 4
+    fig-cap-location: top   
+    tbl-cap-location: top   
+    message: false          
+    warning: false          
+    error: false           
+    fig-pos: 'H'
+    
     toc: true
     code-fold: true
     theme: cosmo
@@ -12,17 +23,20 @@ csl: apa.csl
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 library(readr)
 library(dplyr)
 library(knitr)
 library(tidyr)
 library(kableExtra)
+library(lubridate)
+library(tidyverse)
+library(ggplot2)
+library(viridis)  # 加载色盲友好调色板包
 ```
 
 # Introduction
 
-This project analyzes the impact of COVID-19 across major countries between 2020 and 2023. The following research questions guide our study:
+This project analyzes the impact of COVID-19 across major countries between 2020 and 2024. The following research questions guide our study:
 
 1.  How did daily case counts change across countries over time?
 2.  What is the relationship between vaccination and death rates in the US?
@@ -36,7 +50,8 @@ We use trusted global datasets, clean and transform them, and present insights u
 
 We utilize publicly available datasets from: - **Johns Hopkins University (JHU)**: Confirmed global case time series. - **COVID-19 Data Hub**: U.S.-focused metrics on deaths and vaccinations. - **Our World in Data (OWID)**: Global ICU and mortality metrics.
 
-The OWID dataset provides comprehensive metrics [@owid].\
+The OWID dataset provides comprehensive metrics [@owid].
+
 Johns Hopkins data is widely used for case tracking [@jhu].
 
 The COVID-19 Data Hub R package supports granular filtering [@covid19hub].
@@ -48,6 +63,8 @@ All data were preprocessed using R scripts and stored in `tidied_data/`.
 # 1. COVID-19 Case Trends by Country
 
 ```{r load-cases, echo=FALSE}
+#| label: tbl-summary_of_monthly_covid19_cases_by_country
+#| tbl-cap: "Summary of Monthly COVID-19 Cases by Country"
 jh_cases <- read_csv("tidied_data/jh_confirmed_cases_country_level.csv")
 
 case_summary <- jh_cases %>%
@@ -64,13 +81,15 @@ kable(case_summary, caption = "Summary of Monthly COVID-19 Cases by Country") %>
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
 ```
 
-The table summarizes cumulative and monthly COVID-19 case patterns across five countries. The United States recorded the highest number of total cases—over **53.8 billion**, with an average of **1.38 billion cases per month**, and a peak in **January 2023** with over **3.15 billion cases**. The United Kingdom follows with a significantly lower peak and average, though it also peaked in the same month. All five countries observed their peak case counts in **01/2023**, suggesting a global surge likely related to the Omicron wave. Singapore and China had comparatively lower case totals, with China’s relatively low mean cases potentially tied to stricter containment policies or reporting methods.
+The table @tbl-summary_of_monthly_covid19_cases_by_country summarizes cumulative and monthly COVID-19 case patterns across five countries. The United States recorded the highest number of total cases—over **53.8 billion**, with an average of **1.38 billion cases per month**, and a peak in **January 2023** with over **3.15 billion cases**. The United Kingdom follows with a significantly lower peak and average, though it also peaked in the same month. All five countries observed their peak case counts in **01/2023**, suggesting a global surge likely related to the Omicron wave. Singapore and China had comparatively lower case totals, with China’s relatively low mean cases potentially tied to stricter containment policies or reporting methods.
 
 ------------------------------------------------------------------------
 
 # 2. US Vaccination and Death Relationship
 
 ```{r load-us, echo=FALSE}
+#| label: tbl-us_covid19_vaccination_and_death_summary
+#| tbl-cap: "US COVID-19 Vaccination and Death Summary"
 us_data <- read_csv("tidied_data/covid_datahub_USA_filtered.csv")
 
 summary_stats_us <- us_data %>%
@@ -96,13 +115,15 @@ kable(summary_stats_us_long, caption = "US COVID-19 Vaccination and Death Summar
                 full_width = FALSE)
 ```
 
-This table highlights U.S. COVID-19 death and vaccination statistics. The total death toll reached nearly **730 million**, with **maximum vaccination coverage** reaching over **270 million individuals**, and **230 million fully vaccinated**. Daily deaths averaged around **463,839**, with a median of **425,224**, indicating consistently high fatality rates. Notably, the computed correlation between full vaccination and daily deaths is **1**, which is surprisingly high and may indicate data aggregation effects or non-linear dependencies. A deeper time-series analysis would be needed to validate causation.
+This table @tbl-us_covid19_vaccination_and_death_summary highlights U.S. COVID-19 death and vaccination statistics. The total death toll reached nearly **730 million**, with **maximum vaccination coverage** reaching over **270 million individuals**, and **230 million fully vaccinated**. Daily deaths averaged around **463,839**, with a median of **425,224**, indicating consistently high fatality rates. Notably, the computed correlation between full vaccination and daily deaths is **1**, which is surprisingly high and may indicate data aggregation effects or non-linear dependencies. A deeper time-series analysis would be needed to validate causation.
 
 ------------------------------------------------------------------------
 
 # 3. ICU Response by Country
 
 ```{r load-icu, echo=FALSE}
+#| label: tbl-icu_response_to_covid19_waves_by_country
+#| tbl-cap: "ICU Response to COVID-19 Waves by Country"
 icu_data <- read_csv("tidied_data/owid_covid_data_filtered_final.csv")
 
 icu_summary <- icu_data %>%
@@ -118,19 +139,124 @@ kable(icu_summary, caption = "ICU Response to COVID-19 Waves by Country") %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
 ```
 
-This table shows the overall burden on ICU systems across five countries. The U.S. again leads with over **10.6 million total ICU patients**, peaking at **28,891 patients**. The United Kingdom and Canada followed with considerably lower ICU loads, suggesting either a more stable hospitalization trend or better capacity management. Interestingly, both **China and Singapore** reported zero ICU patients during the dataset period, which may reflect either data unavailability, reporting suppression, or effective containment strategies that prevented severe outcomes.
+This table @tbl-icu_response_to_covid19_waves_by_country shows the overall burden on ICU systems across five countries. The U.S. again leads with over **10.6 million total ICU patients**, peaking at **28,891 patients**. The United Kingdom and Canada followed with considerably lower ICU loads, suggesting either a more stable hospitalization trend or better capacity management. Interestingly, both **China and Singapore** reported zero ICU patients during the dataset period, which may reflect either data unavailability, reporting suppression, or effective containment strategies that prevented severe outcomes.
 
 ------------------------------------------------------------------------
 
 # Visualization
 
-*TODO: Add visualizations such as line charts, scatterplots, or heatmaps to support the analysis above.*
+## Daily COVID-19 Cases Across Countries
+
+```{r}
+#| label: fig-yearly_covid19_case_counts
+#| fig-cap: "Yearly COVID-19 Case Counts Over Time (2020–2024)"
+#| fig-width: 8
+#| fig-height: 6
+
+covidTidy <- read_csv("tidied_data/owid_covid_data_filtered_final.csv") %>%
+  mutate(
+    date = as.Date(date),
+    new_cases = total_cases - lag(total_cases),
+    new_cases = ifelse(new_cases < 0, 0, new_cases) / 1000
+  )
+
+ggplot(covidTidy, aes(x = date, y = new_cases, color = country, linetype = country)) +
+  geom_line(size = 0.5) +
+  scale_color_viridis_d(option = "plasma", begin = 0.1, end = 0.9) +
+  labs(
+    x = "Year",
+    y = "Yearly Cases",
+    color = "Country/Region",
+    linetype = "Country/Region"
+  ) +
+  scale_y_continuous(labels = function(x) paste0(x, "k")) +
+  theme_minimal() +
+  theme(
+      legend.position = "top"
+    ) +
+  facet_wrap(~ country, scales = "free_y", ncol = 2)
+```
+
+As shown in @fig-yearly_covid19_case_counts. This multi-panel line chart visualizes daily COVID-19 case trends from 2020 to 2024 across five countries: Canada, China, Singapore, the United Kingdom, and the United States. The United States exhibits the most dramatic surge, peaking in early 2022 with daily counts exceeding **4 million cases**, followed by more sustained waves. Canada and the UK also experienced intense waves centered around early 2021 and 2022. In contrast, China's data shows a singular, sharp peak, likely associated with a delayed but explosive wave post-lockdown. Singapore’s trend reveals frequent, smaller spikes, suggesting recurring outbreaks with faster containment. These synchronized varied patterns reflect how national policies and variant emergence shaped case trajectories globally.
+
+## Vaccination vs. Death Rates in the U.S.
+
+```{r}
+#| label: fig-vaccination_rate_vs_death_rate_intheus
+#| fig-cap: "Vaccination Rate vs. Death Rate in the U.S. (2021–2023)"
+covidUSA <- read_csv("tidied_data/covid_datahub_USA_filtered.csv") %>%
+  mutate(
+    date = as.Date(date),
+    pct_fully_vaccinated = (people_fully_vaccinated / 335000000) * 100,
+    daily_deaths = deaths - lag(deaths),
+    death_rate_per_100k = (daily_deaths / 335000000) * 100000,
+    year_date = as.factor(year(date))
+  ) %>%
+  filter(pct_fully_vaccinated > 0, daily_deaths > 0)
+
+ggplot(covidUSA, aes(x = pct_fully_vaccinated, y = death_rate_per_100k, color = year_date)) +
+  geom_point(alpha = 0.5, size = 2) +
+  scale_color_viridis_d(option = "plasma", begin = 0.1, end = 0.9) +
+  geom_smooth(method = "loess", se = FALSE, color = "#0072B2") +
+  labs(
+    x = "% Fully Vaccinated",
+    y = "Deaths per 100,000 People",
+    color = "Year"
+  ) +
+  theme_bw() +
+  theme(
+      legend.position = "top"
+    )
+
+```
+
+As shown in @fig-vaccination_rate_vs_death_rate_intheus. This scatterplot shows the relationship between full vaccination rates and COVID-19 deaths per 100,000 people in the United States, colored by year. The smoothed curve reveals a clear inverse relationship during 2020–2021, where increased vaccination coverage is associated with a substantial drop in mortality. However, this trend appears to have reversed in 2022, with higher vaccination rates not necessarily leading to lower death rates. This suggests that other factors, such as the emergence of new variants or changes in public health policies, may be influencing COVID-19 outcomes. By late 2023, the fully vaccinated population increases significantly, reaching nearly **70% in 2024**. During this period, the death rate becomes more controlled, suggesting either improved vaccine effectiveness or a reduction in the severity of circulating variants.
+
+## ICU Occupancy Over Time
+
+```{r}
+#| label: fig-monthly_icu_occupancy_during_covid19
+#| fig-cap: "Monthly ICU Occupancy During COVID-19"
+covid_ICU <- read_csv("tidied_data/owid_covid_data_filtered_final.csv") %>%
+  mutate(
+    date = as.Date(date),
+    date_ym =  as.Date(format(date, "%Y-%m-01"))
+  ) %>%
+  filter(country %in% c("United States", "United Kingdom", "Canada")) %>%
+  group_by(country, date_ym) %>%
+  summarise(icu_patients = sum(icu_patients, na.rm = TRUE), .groups = "drop") %>%
+  mutate(icu_patients = icu_patients / 1000)
+
+ggplot(covid_ICU, aes(x = date_ym, y = icu_patients, fill = country)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_viridis_d(option = "plasma", begin = 0.1, end = 0.9) +
+  annotate("rect", xmin = as.Date("2021-06-01"), xmax = as.Date("2021-11-01"), ymin = -Inf, ymax = Inf, alpha = 0.2, fill = "#009E73") +
+  annotate("rect", xmin = as.Date("2021-11-01"), xmax = as.Date("2022-02-01"), ymin = -Inf, ymax = Inf, alpha = 0.2, fill = "#999999") +
+  annotate("text", x = as.Date("2021-08-01"), y = 900, label = "Delta", size = 3.5) +
+  annotate("text", x = as.Date("2022-01-01"), y = 900, label = "Omicron", size = 3.5) +
+  labs(
+    x = "Month",
+    y = "ICU Patients (in thousands)",
+    fill = "Country"
+  ) +
+  scale_x_date(
+    breaks = seq(as.Date("2020-01-01"), as.Date("2024-08-01"), by = "3 months"),
+    date_labels = "%Y-%m"
+  ) +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "top"
+    )
+```
+
+As shown in @fig-monthly_icu_occupancy_during_covid19. This grouped bar chart illustrates monthly ICU occupancy (in thousands) across the U.S., U.K., and Canada **from 2020 through 2024**. The United States shows dominant ICU demand throughout the period, particularly during **end of 2020-start of 2021**, the **Delta** and **Omicron waves**, which are shaded for reference. ICU occupancy in the U.S. alone peaked at over **800,000 patients**. The **Delta period (mid-2021)** aligns with a sharp rise in ICU patients, peaking above 800,000(Three countries). The U.K. and Canada exhibit far lower but synchronized ICU trends. Notably, ICU burden in all three countries dropped significantly after the Omicron wave, possibly due to improved treatments, increased vaccine protection, and lower hospitalization rates in later variants. This figure emphasizes the pressure variant surges placed on critical care infrastructure.
 
 ------------------------------------------------------------------------
 
 # Conclusion
 
-This report provides a data-driven overview of COVID-19’s impact across several countries, with particular emphasis on infection trends, vaccination effectiveness, and ICU resource utilization. The analysis reveals that the United States and the United Kingdom experienced the highest case volumes and ICU burdens, both peaking in January 2023—likely driven by the Omicron variant. Despite stark differences in healthcare infrastructure and containment strategies, all five countries displayed synchronous peak patterns, underscoring the global nature of COVID-19 surges.
+This report provides a data-driven overview of COVID-19’s impact across several countries, with particular emphasis on infection trends, vaccination effectiveness, and ICU resource utilization. The analysis reveals that the United States and the United Kingdom experienced the highest case volumes and ICU burdens, both peaking in January 2022—likely driven by the Omicron variant. Despite stark differences in healthcare infrastructure and containment strategies, all five countries displayed synchronous peak patterns, underscoring the global nature of COVID-19 surges.
 
 Vaccination efforts in the United States showed promising coverage, with over 230 million individuals fully vaccinated. However, the observed correlation between vaccination and death rates suggests complex dynamics—potentially driven by lag effects, reporting granularity, and overlapping policy changes—that warrant further investigation. This highlights the importance of analyzing time-lagged effects rather than aggregate associations alone.
 
