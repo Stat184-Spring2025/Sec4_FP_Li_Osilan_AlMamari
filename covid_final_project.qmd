@@ -145,7 +145,7 @@ This table @tbl-icu_response_to_covid19_waves_by_country shows the overall burde
 
 # Visualization
 
-## Daily COVID-19 Cases Across Countries
+## Yearly COVID-19 Cases Across Countries
 
 ```{r}
 #| label: fig-yearly_covid19_case_counts
