@@ -165,7 +165,7 @@ kable(icu_summary, caption = "ICU Response to COVID-19 Waves by Country",
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
 ```
 
-This table @tbl-icu_response_to_covid19_waves_by_country shows the overall burden on ICU systems across five countries. The U.S. again leads with over **103,680 total ICU patients**, peaking at **28,891 patients** on **January 12th 2021**. The United Kingdom and Canada followed with considerably lower ICU loads, suggesting either a more stable hospitalization trend or better capacity management.
+This table @tbl-icu_response_to_covid19_waves_by_country shows the overall burden on ICU systems across three countries. The U.S. again leads with over **103,680 total ICU patients**, peaking at **28,891 patients** on **January 12th 2021**. The United Kingdom and Canada followed with considerably lower ICU loads, suggesting either a more stable hospitalization trend or better capacity management.
 
 # Visualization
 
