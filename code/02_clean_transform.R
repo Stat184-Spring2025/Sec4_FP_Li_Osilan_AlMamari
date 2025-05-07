@@ -50,29 +50,40 @@ target_countries <- c("Canada", "China", "United Kingdom", "US", "Singapore")
 
 jh_filtered <- jh_data %>%
   filter(`Country/Region` %in% target_countries) %>%
-  select(-`Province/State`, -Lat, -Long)  # Drop unnecessary columns
-
-# Step 3: Group by Country and sum values for each date column
-jh_country_level <- jh_filtered %>%
+  select(-`Province/State`, -Lat, -Long) %>%  # Drop unnecessary columns
   group_by(`Country/Region`) %>%
   summarise(across(everything(), sum, na.rm = TRUE), .groups = "drop")
 
-# Step 4: convert date to months
-date_to_month <- jh_country_level %>%
+width_to_long <- jh_filtered %>%
   pivot_longer(
-    cols = 2:ncol(jh_country_level),
+    cols = 2:ncol(jh_filtered),
     names_to = "date",
-    values_to = "value"
+    values_to = "total_cases"
   ) %>%
   mutate(
-    year_month = format(as.Date(date, "%m/%d/%y"), format="%Y/%m/01")
+    date = format(as.Date(date, "%m/%d/%y"), format="%Y/%m/%d")
+  ) %>%
+  group_by(`Country/Region`) %>%
+  mutate(
+    timepoint = row_number(),
+    new_cases = case_when(
+      timepoint == 1 ~ 0,
+      .default =  total_cases - lag(total_cases)
+    )
+  ) %>%
+  select(-timepoint)
+
+# Step 3: convert date to months
+date_to_month <- width_to_long %>%
+  mutate(
+    year_month = format(as.Date(date), format="%Y/%m/01")
   ) %>%
   group_by(`Country/Region`, year_month) %>%
   summarise(
-    total_case = sum(value)
+    new_cases = sum(new_cases)
   )
 
-# Step 5: Save the cleaned, aggregated wide-format dataset
+# Step 4: Save the cleaned, aggregated wide-format dataset
 write_csv(date_to_month, "tidied_data/jh_confirmed_cases_country_level.csv")
 
 

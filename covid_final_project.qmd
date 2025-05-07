@@ -58,8 +58,6 @@ The COVID-19 Data Hub R package supports granular filtering [@covid19hub].
 
 All data were preprocessed using R scripts and stored in `tidied_data/`.
 
-
-
 # 1. COVID-19 Case Trends by Country
 
 ```{r}
@@ -70,23 +68,25 @@ jh_cases <- read_csv("tidied_data/jh_confirmed_cases_country_level.csv")
 case_summary <- jh_cases %>%
   group_by(`Country/Region`) %>%
   summarise(
-    `Total Cases` = comma(sum(total_case)),
-    `Mean Monthly Cases` = comma(mean(total_case)),
-    `Peak Month` = year_month[which.max(total_case)],
-    `Peak Cases` = comma(max(total_case))
+    `Total Cases` = sum(new_cases, na.rm = TRUE),
+    `Peak Increase` = max(new_cases, na.rm = TRUE),
+    `Peak Date` = year_month[which.max(new_cases)]
+  ) %>%
+  mutate(
+    `Total Cases` = comma(`Total Cases`),
+    `Peak Increase` = comma(`Peak Increase`)
   ) %>%
   arrange(desc(`Total Cases`))
 
 kable(case_summary, 
-      caption = "Summary of Monthly COVID-19 Cases by Country",
-      align = c("l", "r", "r", "r", "r")) %>%
+      caption = "Summary of Total and Peak Monthly COVID-19 Cases by Country",
+      align = c("l", "r", "r", "r")) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
                 latex_options = "scale_down",
                 full_width = FALSE)
 ```
 
-The table @tbl-summary_of_monthly_covid19_cases_by_country summarizes cumulative and monthly COVID-19 case patterns across five countries. The United States recorded the highest number of total cases—over **53.8 billion**, with an average of **1.38 billion cases per month**, and a peak in **January 2023** with over **3.15 billion cases**. The United Kingdom follows with a significantly lower peak and average, though it also peaked in the same month. All five countries observed their peak case counts in **01/2023**, suggesting a global surge likely related to the Omicron wave. Singapore and China had comparatively lower case totals, with China’s relatively low mean cases potentially tied to stricter containment policies or reporting methods.
-
+The table @tbl-summary_of_monthly_covid19_cases_by_country summarizes total COVID-19 case five countries as well as the peak increase on a specific date. The United States recorded the highest number of total cases—over **103.8 million**, and a peak at **January 1st 2022** with over **20.3 mllion cases**. The United Kingdom follows with a significantly lower peak, though it also peaked on the same date. All five countries observed their peak case counts at the start of **2022**, suggesting a global surge likely related to the Omicron wave. Singapore and Canada had comparatively lower case totals, Their relatively low peak increase of cases potentially reflected a more thorough safety and quarantine policy.
 
 # 2. US Vaccination and Death Relationship
 
@@ -133,9 +133,7 @@ kable(summary_stats_us_long,
                 full_width = FALSE)
 ```
 
-This table @tbl-us_covid19_vaccination_and_death_summary summarizes U.S. COVID-19 deaths and vaccination statistics based on daily changes. The total number of deaths exceeded **836,000**, while over **269 million individuals** received at least one dose of the vaccine, and more than **230 million were fully vaccinated**. On average, there were approximately **1,006 deaths** per day, with a **median of 608**, reflecting variability in daily fatality counts. Mean daily vaccination figures reached around **324,624**, and daily full vaccinations averaged **277,251**. The correlation between daily full vaccinations and daily deaths was modest at **0.16**, suggesting a **weak positive linear association** — likely influenced by overlapping time trends rather than direct causation. Further time-series or lagged analyses would be required to clarify the nature of this relationship.
-
-
+This table @tbl-us_covid19_vaccination_and_death_summary summarizes U.S. COVID-19 deaths and vaccination statistics based on daily changes. The total number of deaths exceeded **836,000**, while over **269 million individuals** received at least one dose of the vaccine, and more than **230 million were fully vaccinated**. On average, there were approximately **1,006 deaths** per day, with a **median of 608**, reflecting variability in daily fatality counts. Mean daily vaccination figures reached around **324,624**, and daily full vaccinations averaged **277,251**. The correlation between daily full vaccinations and daily deaths was approximately at **0.16**, suggesting a **weak positive linear association** — This pattern is likely due to overlapping trends over time rather than a direct cause-and-effect relationship. To better understand how these factors are connected, further analysis using time series or lagged data would be needed.
 
 # 3. ICU Response by Country
 
@@ -155,20 +153,19 @@ icu_summary <- icu_data %>%
   summarise(
     Country = first(country),
     `Total ICU Patients` = format(sum(icu_increase, na.rm = TRUE), big.mark = ",", scientific = FALSE),
-    `Max ICU Patients` = format(max(icu_patients, na.rm = TRUE), big.mark = ",", scientific = FALSE)
+    `Max ICU Patients` = format(max(icu_patients, na.rm = TRUE), big.mark = ",", scientific = FALSE),
+    `Peak Date` = date[which.max(icu_patients)] 
   ) %>%
-  select(Country, `Total ICU Patients`, `Max ICU Patients`) %>%
+  select(Country, `Total ICU Patients`, `Max ICU Patients`,`Peak Date`) %>%
   arrange(desc(`Max ICU Patients`))
 
 # ICU Response to COVID-19 Waves by Country
 kable(icu_summary, caption = "ICU Response to COVID-19 Waves by Country",
-      align = c("l", "r", "r")) %>%
+      align = c("l", "r", "r", "r")) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
 ```
 
-This table @tbl-icu_response_to_covid19_waves_by_country shows the overall burden on ICU systems across five countries. The U.S. again leads with over **103,680 total ICU patients**, peaking at **28,891 patients**. The United Kingdom and Canada followed with considerably lower ICU loads, suggesting either a more stable hospitalization trend or better capacity management.
-
-
+This table @tbl-icu_response_to_covid19_waves_by_country shows the overall burden on ICU systems across five countries. The U.S. again leads with over **103,680 total ICU patients**, peaking at **28,891 patients** on **January 12th 2021**. The United Kingdom and Canada followed with considerably lower ICU loads, suggesting either a more stable hospitalization trend or better capacity management.
 
 # Visualization
 
@@ -285,8 +282,6 @@ ggplot(covid_ICU, aes(x = date_ym, y = icu_patients, fill = country)) +
 ```
 
 As shown in @fig-monthly_icu_occupancy_during_covid19. This grouped bar chart illustrates monthly ICU occupancy (in thousands) across the U.S., U.K., and Canada **from 2020 through 2024**. The United States shows dominant ICU demand throughout the period, particularly during **end of 2020-start of 2021**, the **Delta** and **Omicron waves**, which are shaded for reference. ICU occupancy in the U.S. alone peaked at over **800,000 patients**. The **Delta period (mid-2021)** aligns with a sharp rise in ICU patients, peaking above 800,000(Three countries). The U.K. and Canada exhibit far lower but synchronized ICU trends. Notably, ICU burden in all three countries dropped significantly after the Omicron wave, possibly due to improved treatments, increased vaccine protection, and lower hospitalization rates in later variants. This figure emphasizes the pressure variant surges placed on critical care infrastructure.
-
-
 
 # Conclusion
 

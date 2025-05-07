@@ -20,9 +20,13 @@ icu_data <- read_csv("tidied_data/owid_covid_data_filtered_final.csv")
 case_summary <- jh_cases %>%
   group_by(`Country/Region`) %>%
   summarise(
-    `Total Cases` = comma(sum(total_case)),
-    `Peak Month` = year_month[which.max(total_case)],
-    `Peak Cases` = comma(max(total_case))
+    `Total Cases` = sum(new_cases, na.rm = TRUE),
+    `Peak Increase` = max(new_cases, na.rm = TRUE),
+    `Peak Date` = year_month[which.max(new_cases)]
+  ) %>%
+  mutate(
+    `Total Cases` = comma(`Total Cases`),
+    `Peak Increase` = comma(`Peak Increase`)
   ) %>%
   arrange(desc(`Total Cases`))
 
@@ -56,9 +60,10 @@ icu_summary <- icu_data %>%
   summarise(
     Country = first(country),
     `Total ICU Patients` = format(sum(icu_increase, na.rm = TRUE), big.mark = ",", scientific = FALSE),
-    `Max ICU Patients` = format(max(icu_patients, na.rm = TRUE), big.mark = ",", scientific = FALSE)
-  ) %>%
-  select(Country, `Total ICU Patients`, `Max ICU Patients`) %>%
+    `Max ICU Patients` = format(max(icu_patients, na.rm = TRUE), big.mark = ",", scientific = FALSE),
+    `Peak Date` = date[which.max(icu_patients)] 
+) %>%
+  select(Country, `Total ICU Patients`, `Max ICU Patients`,`Peak Date` ) %>%
   arrange(desc(`Max ICU Patients`))
 
 
@@ -66,8 +71,8 @@ icu_summary <- icu_data %>%
 
 # Summary of Monthly COVID-19 Cases by Country
 kable(case_summary, 
-      caption = "Summary of Monthly COVID-19 Cases by Country",
-      align = c("l", "r", "r", "r", "r")) %>%
+      caption = "Summary of Total and Peak Monthly COVID-19 Cases by Country",
+      align = c("l", "r", "r", "r")) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
                 latex_options = "scale_down",
                 full_width = FALSE)
@@ -93,5 +98,5 @@ kable(summary_stats_us_long,
 
 # ICU Response to COVID-19 Waves by Country
 kable(icu_summary, caption = "ICU Response to COVID-19 Waves by Country",
-      align = c("l", "r", "r")) %>%
+      align = c("l", "r", "r","r")) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
