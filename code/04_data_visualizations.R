@@ -9,22 +9,29 @@ library(lubridate)
 # Create a line plot to represent the cases for each of the 5 countries
 # Calculate new Yearly cases ----
 covidTidy <- read_csv("tidied_data/owid_covid_data_filtered_final.csv") %>%
+  group_by(country) %>%
   mutate(
     date = as.Date(date),
-    new_cases = total_cases - lag(total_cases),
-    new_cases = ifelse(new_cases < 0, 0, new_cases) / 1000
-  )
+    timepoint = row_number(),
+    new_cases = case_when(
+      timepoint == 1 ~ 0,
+      .default =  total_cases - lag(total_cases)
+    )
+  ) %>%
+  select(-timepoint)
 
-ggplot(covidTidy, aes(x = date, y = new_cases, color = country, linetype = country)) +
+ggplot(covidTidy, aes(x = date, y = new_cases, color = country)) +
   geom_line(size = 0.5) +
   scale_color_viridis_d(option = "plasma", begin = 0.1, end = 0.9) +
   labs(
     x = "Year",
     y = "Yearly Cases",
     color = "Country/Region",
-    linetype = "Country/Region"
   ) +
-  scale_y_continuous(labels = function(x) paste0(x, "k")) +
+  scale_y_continuous(labels = scales::percent_format(
+    scale = 0.001,
+    suffix = "k"
+  )) +
   theme_minimal() +
   theme(
     legend.position = "top"

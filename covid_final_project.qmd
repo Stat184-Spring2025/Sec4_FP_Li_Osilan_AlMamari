@@ -12,8 +12,7 @@ format:
     message: false          
     warning: false          
     error: false           
-    fig-pos: 'H'
-    
+    fig-pos: 'H' 
     toc: true
     code-fold: true
     theme: cosmo
@@ -21,7 +20,6 @@ editor: visual
 bibliography: references.bib
 csl: apa.csl
 ---
-
 ```{r setup, include=FALSE}
 library(readr)
 library(dplyr)
@@ -31,6 +29,8 @@ library(kableExtra)
 library(lubridate)
 library(tidyverse)
 library(ggplot2)
+library(scales)
+library(tools)
 library(viridis)  # 加载色盲友好调色板包
 ```
 
@@ -44,7 +44,7 @@ This project analyzes the impact of COVID-19 across major countries between 2020
 
 We use trusted global datasets, clean and transform them, and present insights using statistical summaries and visualizations.
 
-------------------------------------------------------------------------
+
 
 # Data Overview
 
@@ -58,11 +58,11 @@ The COVID-19 Data Hub R package supports granular filtering [@covid19hub].
 
 All data were preprocessed using R scripts and stored in `tidied_data/`.
 
-------------------------------------------------------------------------
+
 
 # 1. COVID-19 Case Trends by Country
 
-```{r load-cases, echo=FALSE}
+```{r}
 #| label: tbl-summary_of_monthly_covid19_cases_by_country
 #| tbl-cap: "Summary of Monthly COVID-19 Cases by Country"
 jh_cases <- read_csv("tidied_data/jh_confirmed_cases_country_level.csv")
@@ -70,78 +70,105 @@ jh_cases <- read_csv("tidied_data/jh_confirmed_cases_country_level.csv")
 case_summary <- jh_cases %>%
   group_by(`Country/Region`) %>%
   summarise(
-    Total_Cases = sum(total_case),
-    Mean_Monthly_Cases = mean(total_case),
-    Peak_Month = year_month[which.max(total_case)],
-    Peak_Cases = max(total_case)
+    `Total Cases` = comma(sum(total_case)),
+    `Mean Monthly Cases` = comma(mean(total_case)),
+    `Peak Month` = year_month[which.max(total_case)],
+    `Peak Cases` = comma(max(total_case))
   ) %>%
-  arrange(desc(Total_Cases))
+  arrange(desc(`Total Cases`))
 
-kable(case_summary, caption = "Summary of Monthly COVID-19 Cases by Country") %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
-```
-
-The table @tbl-summary_of_monthly_covid19_cases_by_country summarizes cumulative and monthly COVID-19 case patterns across five countries. The United States recorded the highest number of total cases—over **53.8 billion**, with an average of **1.38 billion cases per month**, and a peak in **January 2023** with over **3.15 billion cases**. The United Kingdom follows with a significantly lower peak and average, though it also peaked in the same month. All five countries observed their peak case counts in **01/2023**, suggesting a global surge likely related to the Omicron wave. Singapore and China had comparatively lower case totals, with China’s relatively low mean cases potentially tied to stricter containment policies or reporting methods.
-
-------------------------------------------------------------------------
-
-# 2. US Vaccination and Death Relationship
-
-```{r load-us, echo=FALSE}
-#| label: tbl-us_covid19_vaccination_and_death_summary
-#| tbl-cap: "US COVID-19 Vaccination and Death Summary"
-us_data <- read_csv("tidied_data/covid_datahub_USA_filtered.csv")
-
-summary_stats_us <- us_data %>%
-  summarise(
-    Total_Deaths = sum(deaths),
-    Max_Vaccinated = max(people_vaccinated),
-    Max_Fully_Vaccinated = max(people_fully_vaccinated),
-    Mean_Daily_Deaths = mean(deaths),
-    Median_Daily_Deaths = median(deaths)
-  )
-
-correlation <- cor(us_data$people_fully_vaccinated, us_data$deaths, use = "complete.obs")
-summary_stats_us$Correlation_FullyVaccinated_Deaths <- round(correlation, 3)
-
-# Transpose to long format for narrow PDF layout
-summary_stats_us_long <- summary_stats_us %>%
-  pivot_longer(everything(), names_to = "Metric", values_to = "Value") %>%
-  mutate(Value = format(round(Value), big.mark = ","))
-
-kable(summary_stats_us_long, caption = "US COVID-19 Vaccination and Death Summary") %>%
+kable(case_summary, 
+      caption = "Summary of Monthly COVID-19 Cases by Country",
+      align = c("l", "r", "r", "r", "r")) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
                 latex_options = "scale_down",
                 full_width = FALSE)
 ```
 
-This table @tbl-us_covid19_vaccination_and_death_summary highlights U.S. COVID-19 death and vaccination statistics. The total death toll reached nearly **730 million**, with **maximum vaccination coverage** reaching over **270 million individuals**, and **230 million fully vaccinated**. Daily deaths averaged around **463,839**, with a median of **425,224**, indicating consistently high fatality rates. Notably, the computed correlation between full vaccination and daily deaths is **1**, which is surprisingly high and may indicate data aggregation effects or non-linear dependencies. A deeper time-series analysis would be needed to validate causation.
+The table @tbl-summary_of_monthly_covid19_cases_by_country summarizes cumulative and monthly COVID-19 case patterns across five countries. The United States recorded the highest number of total cases—over **53.8 billion**, with an average of **1.38 billion cases per month**, and a peak in **January 2023** with over **3.15 billion cases**. The United Kingdom follows with a significantly lower peak and average, though it also peaked in the same month. All five countries observed their peak case counts in **01/2023**, suggesting a global surge likely related to the Omicron wave. Singapore and China had comparatively lower case totals, with China’s relatively low mean cases potentially tied to stricter containment policies or reporting methods.
 
-------------------------------------------------------------------------
+
+# 2. US Vaccination and Death Relationship
+
+```{r}
+#| label: tbl-us_covid19_vaccination_and_death_summary
+#| tbl-cap: "US COVID-19 Vaccination and Death Summary"
+# Load the data
+us_data <- read_csv("tidied_data/covid_datahub_USA_filtered.csv")
+
+# Compute summary statistics using daily changes
+summary_stats_us <- us_data %>%
+  summarise(
+    Total_Deaths = sum(deaths_change, na.rm = TRUE),
+    Total_Vaccinated = sum(people_vaccinated_change, na.rm = TRUE),
+    Total_Fully_Vaccinated = sum(people_fully_vaccinated_change, na.rm = TRUE),
+    Mean_Daily_Deaths = mean(deaths_change, na.rm = TRUE),
+    Median_Daily_Deaths = median(deaths_change, na.rm = TRUE),
+    Mean_Daily_Vaccinated = mean(people_vaccinated_change, na.rm = TRUE),
+    Median_Daily_Vaccinated = median(people_vaccinated_change, na.rm = TRUE),
+    Mean_Daily_Fully_Vaccinated = mean(people_fully_vaccinated_change, na.rm = TRUE),
+    Median_Daily_Fully_Vaccinated = median(people_fully_vaccinated_change, na.rm = TRUE)
+  )
+
+# Correlation based on daily changes
+correlation <- cor(us_data$people_fully_vaccinated_change, us_data$deaths_change, use = "complete.obs")
+summary_stats_us$Correlation_FullyVaccinated_Deaths <- round(correlation, 3)
+
+# Convert to long format and clean labels
+summary_stats_us_long <- summary_stats_us %>%
+  pivot_longer(everything(), names_to = "Metric", values_to = "Value") %>%
+  mutate(
+    Metric = gsub("_", " ", Metric),
+    Metric = gsub("(?<=[a-z])(?=[A-Z])", " ", Metric, perl = TRUE),
+    Metric = toTitleCase(tolower(Metric)),
+    Value = format(round(as.numeric(Value)), big.mark = ",")
+  )
+
+# Render formatted table
+kable(summary_stats_us_long,
+      caption = "US COVID-19 Vaccination and Death Summary (Using Daily Changes)",
+      align = c("l", "r")) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                latex_options = "scale_down",
+                full_width = FALSE)
+```
+
+This table @tbl-us_covid19_vaccination_and_death_summary summarizes U.S. COVID-19 deaths and vaccination statistics based on daily changes. The total number of deaths exceeded **836,000**, while over **269 million individuals** received at least one dose of the vaccine, and more than **230 million were fully vaccinated**. On average, there were approximately **1,006 deaths** per day, with a **median of 608**, reflecting variability in daily fatality counts. Mean daily vaccination figures reached around **324,624**, and daily full vaccinations averaged **277,251**. The correlation between daily full vaccinations and daily deaths was modest at **0.16**, suggesting a **weak positive linear association** — likely influenced by overlapping time trends rather than direct causation. Further time-series or lagged analyses would be required to clarify the nature of this relationship.
+
+
 
 # 3. ICU Response by Country
 
-```{r load-icu, echo=FALSE}
+```{r}
 #| label: tbl-icu_response_to_covid19_waves_by_country
 #| tbl-cap: "ICU Response to COVID-19 Waves by Country"
 icu_data <- read_csv("tidied_data/owid_covid_data_filtered_final.csv")
 
 icu_summary <- icu_data %>%
+  filter(!(country %in% c("China", "Singapore"))) %>% 
+  arrange(country, date) %>%
   group_by(country) %>%
-  summarise(
-    Total_ICU_Patients = sum(icu_patients, na.rm = TRUE),
-    Max_ICU_Patients = max(icu_patients, na.rm = TRUE),
-    Mean_ICU_Patients = mean(icu_patients, na.rm = TRUE)
+  mutate(
+    prev_icu = lag(icu_patients),
+    icu_increase = ifelse(!is.na(prev_icu) & icu_patients > prev_icu, icu_patients - prev_icu, 0)
   ) %>%
-  arrange(desc(Max_ICU_Patients))
+  summarise(
+    Country = first(country),
+    `Total ICU Patients` = format(sum(icu_increase, na.rm = TRUE), big.mark = ",", scientific = FALSE),
+    `Max ICU Patients` = format(max(icu_patients, na.rm = TRUE), big.mark = ",", scientific = FALSE)
+  ) %>%
+  select(Country, `Total ICU Patients`, `Max ICU Patients`) %>%
+  arrange(desc(`Max ICU Patients`))
 
-kable(icu_summary, caption = "ICU Response to COVID-19 Waves by Country") %>%
+# ICU Response to COVID-19 Waves by Country
+kable(icu_summary, caption = "ICU Response to COVID-19 Waves by Country",
+      align = c("l", "r", "r")) %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = FALSE)
 ```
 
-This table @tbl-icu_response_to_covid19_waves_by_country shows the overall burden on ICU systems across five countries. The U.S. again leads with over **10.6 million total ICU patients**, peaking at **28,891 patients**. The United Kingdom and Canada followed with considerably lower ICU loads, suggesting either a more stable hospitalization trend or better capacity management. Interestingly, both **China and Singapore** reported zero ICU patients during the dataset period, which may reflect either data unavailability, reporting suppression, or effective containment strategies that prevented severe outcomes.
+This table @tbl-icu_response_to_covid19_waves_by_country shows the overall burden on ICU systems across five countries. The U.S. again leads with over **103,680 total ICU patients**, peaking at **28,891 patients**. The United Kingdom and Canada followed with considerably lower ICU loads, suggesting either a more stable hospitalization trend or better capacity management.
 
-------------------------------------------------------------------------
+
 
 # Visualization
 
@@ -154,26 +181,33 @@ This table @tbl-icu_response_to_covid19_waves_by_country shows the overall burde
 #| fig-height: 6
 
 covidTidy <- read_csv("tidied_data/owid_covid_data_filtered_final.csv") %>%
+  group_by(country) %>%
   mutate(
     date = as.Date(date),
-    new_cases = total_cases - lag(total_cases),
-    new_cases = ifelse(new_cases < 0, 0, new_cases) / 1000
-  )
+    timepoint = row_number(),
+    new_cases = case_when(
+      timepoint == 1 ~ 0,
+      .default =  total_cases - lag(total_cases)
+    )
+  ) %>%
+  select(-timepoint)
 
-ggplot(covidTidy, aes(x = date, y = new_cases, color = country, linetype = country)) +
+ggplot(covidTidy, aes(x = date, y = new_cases, color = country)) +
   geom_line(size = 0.5) +
   scale_color_viridis_d(option = "plasma", begin = 0.1, end = 0.9) +
   labs(
     x = "Year",
     y = "Yearly Cases",
     color = "Country/Region",
-    linetype = "Country/Region"
   ) +
-  scale_y_continuous(labels = function(x) paste0(x, "k")) +
+  scale_y_continuous(labels = scales::percent_format(
+    scale = 0.001,
+    suffix = "k"
+  )) +
   theme_minimal() +
   theme(
-      legend.position = "top"
-    ) +
+    legend.position = "top"
+  ) +
   facet_wrap(~ country, scales = "free_y", ncol = 2)
 ```
 
@@ -252,7 +286,7 @@ ggplot(covid_ICU, aes(x = date_ym, y = icu_patients, fill = country)) +
 
 As shown in @fig-monthly_icu_occupancy_during_covid19. This grouped bar chart illustrates monthly ICU occupancy (in thousands) across the U.S., U.K., and Canada **from 2020 through 2024**. The United States shows dominant ICU demand throughout the period, particularly during **end of 2020-start of 2021**, the **Delta** and **Omicron waves**, which are shaded for reference. ICU occupancy in the U.S. alone peaked at over **800,000 patients**. The **Delta period (mid-2021)** aligns with a sharp rise in ICU patients, peaking above 800,000(Three countries). The U.K. and Canada exhibit far lower but synchronized ICU trends. Notably, ICU burden in all three countries dropped significantly after the Omicron wave, possibly due to improved treatments, increased vaccine protection, and lower hospitalization rates in later variants. This figure emphasizes the pressure variant surges placed on critical care infrastructure.
 
-------------------------------------------------------------------------
+
 
 # Conclusion
 
@@ -266,6 +300,11 @@ Overall, these findings reinforce the value of integrating multi-source datasets
 
 This project demonstrates that data transparency, statistical rigor, and contextual interpretation are essential for understanding public health crises and guiding informed policy decisions.
 
-------------------------------------------------------------------------
-
 # References
+
+::: {#refs}
+:::
+
+# Appendix: Full Code
+```{r codeAppend, ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE} 
+```

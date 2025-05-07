@@ -12,14 +12,33 @@ covid_us <- read_csv("raw_data/covid_datahub_USA.csv")
 covid_us_filtered <- covid_us %>%
   select(date, deaths, people_vaccinated, people_fully_vaccinated) %>%
   mutate(
+    date = ymd(date),
     across(
       c(deaths, people_vaccinated, people_fully_vaccinated),
       ~ replace_na(as.numeric(.), 0)
     )
+  ) %>%
+  filter(date >= as.Date("2020-12-13") & date <= as.Date("2023-03-23"))
+#Convert cumulative values to single change
+new_us_data <- covid_us_filtered %>%
+  mutate(
+    timepoint = row_number(),
+    people_vaccinated_change = case_when(
+      timepoint == 1 ~ 0,
+      .default =  people_vaccinated - lag(people_vaccinated, n = 1)
+    ),
+    deaths_change = case_when(
+      timepoint == 1 ~ 0,
+      .default =  deaths - lag(deaths, n = 1)
+    ),
+    people_fully_vaccinated_change = case_when(
+      timepoint == 1 ~ 0,
+      .default =  people_fully_vaccinated - lag(people_fully_vaccinated, n = 1)
+    )
   )
 
 # Save to a new file
-write_csv(covid_us_filtered, "tidied_data/covid_datahub_USA_filtered.csv")
+write_csv(new_us_data, "tidied_data/covid_datahub_USA_filtered.csv")
 
 # did daily case counts change across major countries over time?
 
@@ -46,7 +65,7 @@ date_to_month <- jh_country_level %>%
     values_to = "value"
   ) %>%
   mutate(
-    year_month = format(as.Date(date, "%m/%d/%y"), format="%m/%Y")
+    year_month = format(as.Date(date, "%m/%d/%y"), format="%Y/%m/01")
   ) %>%
   group_by(`Country/Region`, year_month) %>%
   summarise(
