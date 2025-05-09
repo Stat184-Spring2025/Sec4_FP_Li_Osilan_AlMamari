@@ -15,7 +15,7 @@ Use this RMD template to complete peer and self evaluations for your final proje
 ## Who are you evaluating?
 
 *Full name of team member you are evaluating, or say "self-evaluation"*
-Li 
+Li Zhu 
 
 ## Evaluation Areas
 
@@ -75,7 +75,7 @@ Great partner overall,everything worked out well.
 ### Total Score (out of 50): 50
 
 *Full name of team member you are evaluating, or say "self-evaluation"*
-Mohammed Almamari 
+Mohammed Badar Al Mamari
 
 ## Evaluation Areas
 
@@ -130,6 +130,54 @@ Justification/Examples:
 
 Great partner overall,everything worked out well. 
 
+
+
+### Total Score (out of 50): 50
+
+### Total Score (out of 50): 50
+
+*Full name of team member you are evaluating, or say "self-evaluation"*
+self-evaluation
+
+## Evaluation Areas
+
+#### 1. Intellectual Contributions.
+
+*Understanding the project, doing the research, evaluating and interpreting data, creative efforts and problem solving insight, providing intellectual leadership for group.* 
+
+Score (out of 10): _10__
+
+
+
+#### 2. Team Support.
+
+*Enthusiasm, commitment to project, cooperation, respect for other persons’ ideas, willingness to compromise as appropriate, receptiveness to constructive feedback.* 
+
+Score (out of 10): _10__
+
+
+
+#### 3. Communication Contributions. 
+
+*Effectiveness of communication within team, quality of written work, contributions toward creation of presentation and other written work.* 
+
+Score (out of 10): _10__
+
+
+
+#### 4. Time Contributions.
+
+*Keeping team on task, meeting deadlines, following through on plans, attendance at team meetings, does equal share of work.* 
+
+Score (out of 10): _10_
+
+
+
+#### 5. Overall / Other Contributions
+
+*Score any additional contributions, general remarks, or overall impression of this person as a member of the group.*
+
+Score (out of 10): _10__
 
 
 ### Total Score (out of 50): 50
